@@ -1,18 +1,13 @@
-
 import { Geometry, Vector2, Vector3, Face3, Matrix4, Mesh } from 'three'
 
-'use strict';
-	
-	var ThreeBSP,
+	var 
 		EPSILON = 1e-5,
 		COPLANAR = 0,
 		FRONT = 1,
 		BACK = 2,
     SPANNING = 3;
-
-
-
-
+   
+    
 class Node { 
     
     constructor( polygons ) {
@@ -140,17 +135,14 @@ class Node {
   }
 
 
-    
-
-
 class Vertex { 
 
     constructor( x, y, z, normal, uv ) {
       this.x = x;
       this.y = y;
       this.z = z;
-      this.normal = normal || new Vector3;
-      this.uv = uv || new Vector2;
+      this.normal = normal || new Vector3();
+      this.uv = uv || new Vector2();
     } 
     
     clone() {
@@ -247,7 +239,8 @@ class Vertex {
 
 
 
-    class Polygon  {
+
+class Polygon  {
 
       constructor( vertices, normal, w ){ 
         if ( !( vertices instanceof Array ) ) {
@@ -277,12 +270,12 @@ class Vertex {
         this.w = this.normal.clone().dot( a );
         
         return this;
-      };
+      }
        
       
       clone  () {
         var i, vertice_count,
-          polygon = new  Polygon;
+          polygon = new Polygon();
         
         for ( i = 0, vertice_count = this.vertices.length; i < vertice_count; i++ ) {
           polygon.vertices.push( this.vertices[i].clone() );
@@ -393,17 +386,17 @@ class Vertex {
           if ( f.length >= 3 ) front.push( new  Polygon( f ).calculateProperties() );
           if ( b.length >= 3 ) back.push( new  Polygon( b ).calculateProperties() );
         }
-      };
+      } 
 
+}
 
-
-
-    }
-
-
-    
  
+
+
 class ThreeBSP { 
+
+
+ 
 
   constructor( geometry) { 
 
@@ -421,7 +414,7 @@ class ThreeBSP {
      geometry.updateMatrix();
      this.matrix = geometry.matrix.clone();
      geometry = geometry.geometry;
-   } else if ( geometry instanceof ThreeBSP.Node ) {
+   } else if ( geometry instanceof Node ) {
      this.tree = geometry;
      this.matrix = new Matrix4;
      return this;
@@ -432,7 +425,7 @@ class ThreeBSP {
    for ( i = 0, _length_i = geometry.faces.length; i < _length_i; i++ ) {
      face = geometry.faces[i];
      faceVertexUvs = geometry.faceVertexUvs[0][i];
-     polygon = new Polygon;
+     polygon = new Polygon();
      
      if ( face instanceof  Face3 ) {
        vertex = geometry.vertices[ face.a ];
@@ -488,7 +481,7 @@ class ThreeBSP {
 
   }
 
- 
+
   subtract( other_tree ) {
       var a = this.tree.clone(),
         b = other_tree.tree.clone();
@@ -614,15 +607,15 @@ class ThreeBSP {
       mesh.rotation.setFromRotationMatrix( this.matrix );
       
       return mesh;
-    };
+    }
     
     
-
+ 
     
     
     
   } 
 
 
-export { ThreeBSP }
+export  { ThreeBSP }  
    
