@@ -1,14 +1,14 @@
 {
-  "name": "three-js-csg",
+  "name": "three-js-csg-es6",
   "version": "72.0.0",
-  "description": "An NPM module for ThreeJS's CSG (Constructive Solid Geometry) port",
+  "description": "An NPM module for ThreeJS's CSG (Constructive Solid Geometry) port ( es6 module version )",
   "main": "index.js",
   "scripts": {
     "watch": "webpack --watch"
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/james-oldfield/three-js-csg.git"
+    "url": "git://github.com/PerspectivesLab/three-js-csg.git"
   },
   "keywords": [
     "threejs",
@@ -23,9 +23,9 @@
   "author": "James Oldfield",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/james-oldfield/three-js-csg/issues"
+    "url": "https://github.com/PerspectivesLab/three-js-csg/issues"
   },
-  "homepage": "https://github.com/james-oldfield/three-js-csg#readme",
+  "homepage": "https://github.com/PerspectivesLab/three-js-csg#readme",
   "devDependencies": {
     "babel-core": "^6.0.20",
     "babel-loader": "^6.0.1",

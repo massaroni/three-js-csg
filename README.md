@@ -9,8 +9,8 @@
 ## example mesh module
 
 ```js
-import THREE from 'three';
-const ThreeBSP = require('../../index.js')(THREE);
+ 
+import { ThreeBSP } from 'three-js-csg-es6'
 
 export const meshFactory = () => {
   const box = new THREE.Mesh(new THREE.BoxGeometry(500, 100, 100));
