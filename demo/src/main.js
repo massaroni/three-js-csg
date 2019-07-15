@@ -1,4 +1,5 @@
-import THREE from 'three';
+    
+import { PointLight } from 'three';
 import domready from 'domready';
 
 import { renderer } from './canvas';
@@ -11,7 +12,7 @@ domready(() => {
   // Add the objects to the scene
   Object.keys(mesh).forEach(m => app.scene.add(mesh[m]));
 
-  const light = new THREE.PointLight(0xffffff);
+  const light = new  PointLight(0xffffff);
   light.position.set(0, 150, 100);
   app.scene.add(light);
 
