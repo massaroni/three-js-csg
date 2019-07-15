@@ -1,10 +1,10 @@
-# three-js-csg
-
-**three-js-csg** is a wrapper for NPM around [chandlerprall's](https://github.com/chandlerprall/ThreeCSG) Constructive Solid Geometry port to three.js. This package provides support for use with ES2015/AMD/CommonJS style modularity and composability.
+# three-js-csg-es6
+forked from https://github.com/james-oldfield/three-js-csg
+**three-js-csg-es6** is a wrapper for NPM around [chandlerprall's](https://github.com/chandlerprall/ThreeCSG) Constructive Solid Geometry port to three.js. This package provides support for use with ES2015/AMD/CommonJS style modularity and composability.
 
 ## install
 
-`npm i --save three-js-csg`
+`npm i --save three-js-csg-es6`
 
 ## example mesh module
 
@@ -33,6 +33,6 @@ When instantiating the NPM module, it takes an instance of three.js therefore do
 
 ## demo
 
-![three-js-csg](./demo.png)
+![three-js-csg-es6](./demo.png)
 
 See a full demo using this module in this repo at: `./demo`. First clone the repo, run `npm install` and then `npm run watch`. Open `./demo/index.html` in browser to see the demo in action.
