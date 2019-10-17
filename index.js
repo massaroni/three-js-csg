@@ -1,4 +1,4 @@
-import { Geometry, Vector2, Vector3, Face3, Matrix4, Mesh } from 'three'
+import { Geometry, BufferGeometry, BufferAttribute, Vector2, Vector3, Face3, Matrix4, Mesh } from 'three'
 
 	var 
 		EPSILON = 1e-5,
@@ -406,6 +406,9 @@ class ThreeBSP {
      polygon,
      polygons = [],
      tree;
+	 
+	 
+	 console.log( geometry )
  
    if ( geometry instanceof  Geometry ) {
      this.matrix = new  Matrix4;
@@ -413,7 +416,33 @@ class ThreeBSP {
      // #todo: add hierarchy support
      geometry.updateMatrix();
      this.matrix = geometry.matrix.clone();
-     geometry = geometry.geometry;
+	 
+	 if(geometry.geometry.isBufferGeometry) {
+		geometry = new Geometry().fromBufferGeometry( geometry.geometry ) 
+	 
+	 }
+	 
+	 
+	 /*
+	 if ( geometry.geometry instanceof BufferGeometry ) {
+		 
+		  
+		 
+		 this.fromBufferGeometry( geometry.geometry );
+		 return this;
+		 
+		 
+	 } */else { 
+	 
+	  geometry = geometry.geometry;
+	 
+	 }
+	 
+    
+	 
+	 
+	 
+	 
    } else if ( geometry instanceof Node ) {
      this.tree = geometry;
      this.matrix = new Matrix4;
@@ -480,6 +509,94 @@ class ThreeBSP {
    this.tree = new  Node( polygons );
 
   }
+  
+  
+    fromBufferGeometry ( geometry ){
+
+        if( geometry.index === null ){
+
+            this.fromNonIndexedBufferGeometry( geometry );
+
+        }else{
+
+            this.fromIndexedBufferGeometry( geometry );
+
+        }
+    }
+	/*  experimental */
+   fromIndexedBufferGeometry  ( geometry ){
+	   
+        var i, il, index, vertex, polygon,
+            indices = geometry.index.array,
+            positions = geometry.attributes.position.array,
+            polygons = [];
+
+
+        for( i = 0, il = indices.length; i < il; i+=3 ){
+            polygon = new Polygon();
+
+            index = indices[i];
+            vertex = new Vertex( positions[ index * 3 ], positions[ index * 3 + 1 ], positions[ index * 3 + 2 ] );
+            vertex.applyMatrix4(this.matrix);
+            polygon.vertices.push( vertex );
+
+            index = indices[i+1];
+            vertex = new Vertex( positions[ index * 3 ], positions[ index * 3 + 1 ], positions[ index * 3 + 2 ] );
+            vertex.applyMatrix4(this.matrix);
+            polygon.vertices.push( vertex );
+
+            index = indices[i+2];
+            vertex = new Vertex( positions[ index * 3 ], positions[ index * 3 + 1 ], positions[ index * 3 + 2 ] );
+            vertex.applyMatrix4(this.matrix);
+            polygon.vertices.push( vertex );
+
+            polygon.calculateProperties();
+            polygons.push( polygon );
+        }
+        this.tree = new Node( polygons );
+    }
+	/*  experimental */
+    fromNonIndexedBufferGeometry( geometry ){
+		
+        var i, il, index, vertex, normal, uv, polygon,
+            positions = geometry.attributes.position.array,
+			normals = geometry.attributes.normal.array,
+			uvs = geometry.attributes.uv.array,
+            polygons = [];
+ 
+
+        for( i = 0, il = positions.length; i < il; i+=9 ){
+            polygon = new  Polygon();
+
+			normal = new Vector3( normals[ i ], normals[ i + 1 ], normals[ i + 2 ] ) ;  
+			uv = new Vector2( uvs[ i ], uvs[ i + 1 ] ) ;
+            vertex = new  Vertex( positions[ i ], positions[ i + 1 ], positions[ i + 2 ]  , normal, uv );
+            vertex.applyMatrix4(this.matrix);
+            polygon.vertices.push( vertex );
+
+			
+			normal = new Vector3( normals[ i + 3 ], normals[ i + 4 ], normals[ i + 5 ] ) ;  
+			uv = new Vector2( uvs[ i + 2 ], uvs[ i + 3 ] ) ;			
+            vertex = new  Vertex( positions[ i + 3 ], positions[ i + 4 ], positions[ i + 5 ]  , normal, uv );
+            vertex.applyMatrix4(this.matrix);
+            polygon.vertices.push( vertex );
+
+			
+			normal = new Vector3( normals[ i + 6 ], normals[ i + 7 ], normals[ i + 8 ] ) ;  
+			uv = new Vector2( uvs[ i + 4 ], uvs[ i + 5 ] ) ;				
+            vertex = new  Vertex( positions[ i + 6 ], positions[ i + 7 ], positions[ i + 8 ]  , normal, uv );
+            vertex.applyMatrix4(this.matrix);
+            polygon.vertices.push( vertex );
+
+            polygon.calculateProperties();
+            polygons.push( polygon );
+        }
+		
+ 
+		
+        this.tree = new  Node( polygons );
+    }
+  
 
 
   subtract( other_tree ) {
@@ -529,6 +646,76 @@ class ThreeBSP {
       a.matrix = this.matrix;
       return a;
     }
+	/*  experimental */
+   toBufferGeometry() {
+        var i, j,
+            matrix = new  Matrix4().getInverse( this.matrix ),
+            geometry = new  BufferGeometry(),
+            indices = [], positions = [], colors = [], normals = [], uvs = [],
+            polygons = this.tree.allPolygons(),
+            polygon_count = polygons.length,
+            polygon, polygon_vertex_count,
+            vertex_dict = {},
+            vertex_idx_a, vertex_idx_b, vertex_idx_c,
+            vertex,
+            vertex_count = 0,
+            vertexUvs;
+
+        for ( i = 0; i < polygon_count; i++ ) {
+            polygon = polygons[i];
+            polygon_vertex_count = polygon.vertices.length;
+
+            for ( j = 2; j < polygon_vertex_count; j++ ) {
+                vertexUvs = [];
+
+                vertex = polygon.vertices[0];
+                vertex.clone().applyMatrix4( matrix ); // TODO: check if clone is needed here
+                uvs.push( vertex.uv.x, vertex.uv.y );
+                if ( typeof vertex_dict[ vertex.x + ',' + vertex.y + ',' + vertex.z ] !== 'undefined' ) {
+                    vertex_idx_a = vertex_dict[ vertex.x + ',' + vertex.y + ',' + vertex.z ];
+                } else {
+                    positions.push( vertex.x, vertex.y, vertex.z );
+                    vertex_idx_a = vertex_count;
+                    normals.push( polygon.normal.x, polygon.normal.y, polygon.normal.z );
+                    vertex_count ++;
+                }
+
+                vertex = polygon.vertices[j-1];
+                vertex.clone().applyMatrix4( matrix ); // TODO: check if clone is needed here
+                uvs.push( vertex.uv.x, vertex.uv.y );
+                if ( typeof vertex_dict[ vertex.x + ',' + vertex.y + ',' + vertex.z ] !== 'undefined' ) {
+                    vertex_idx_b = vertex_dict[ vertex.x + ',' + vertex.y + ',' + vertex.z ];
+                } else {
+                    positions.push( vertex.x, vertex.y, vertex.z );
+                    vertex_idx_b = vertex_count;
+                    normals.push( polygon.normal.x, polygon.normal.y, polygon.normal.z );
+                    vertex_count ++;
+                }
+
+                vertex = polygon.vertices[j];
+                vertex.clone().applyMatrix4( matrix ); // TODO: check if clone is needed here
+                uvs.push( vertex.uv.x, vertex.uv.y );
+                if ( typeof vertex_dict[ vertex.x + ',' + vertex.y + ',' + vertex.z ] !== 'undefined' ) {
+                    vertex_idx_c = vertex_dict[ vertex.x + ',' + vertex.y + ',' + vertex.z ];
+                } else {
+                    positions.push( vertex.x, vertex.y, vertex.z );
+                    vertex_idx_c = vertex_count;
+                    normals.push( polygon.normal.x, polygon.normal.y, polygon.normal.z );
+                    vertex_count ++;
+                }
+
+                indices.push( vertex_idx_a, vertex_idx_b, vertex_idx_c );
+            }
+        }
+        geometry.addAttribute('uv', new  BufferAttribute(new Float32Array(uvs), 2));
+        geometry.addAttribute('position', new  BufferAttribute(new Float32Array(positions), 3));
+        geometry.addAttribute('normal', new  BufferAttribute(new Float32Array(normals), 3));
+        //geometry.addAttribute('color', new THREE.BufferAttribute(new Float32Array(colors), 3));
+        geometry.setIndex( new  BufferAttribute( new Uint32Array( indices ), 1 ) );
+
+        return geometry;
+    };	
+	
     
     toGeometry() {
       var i, j,
@@ -595,7 +782,7 @@ class ThreeBSP {
         }
         
       }
-      return geometry;
+      return  geometry;//new BufferGeometry().fromGeometry( geometry );;//geometry;
     }
     
 
@@ -609,13 +796,8 @@ class ThreeBSP {
       return mesh;
     }
     
-    
- 
-    
-    
+   
     
   } 
 
-
 export  { ThreeBSP }  
-   
