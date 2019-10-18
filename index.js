@@ -408,7 +408,7 @@ class ThreeBSP {
      tree;
 	 
 	 
-	 console.log( geometry )
+	// console.log( geometry )
  
    if ( geometry instanceof  Geometry ) {
      this.matrix = new  Matrix4;
