@@ -10,31 +10,11 @@ import { Geometry, BufferGeometry, BufferAttribute, Vector2, Vector3, Face3, Mat
     
 class Node { 
     
-    constructor( polygons ) {
-      var i, polygon_count,
-        front = [],
-        back = [];
-
+    constructor() {
       this.polygons = [];
       this.front = this.back = undefined;
-      
-      if ( !(polygons instanceof Array) || polygons.length === 0 ) return;
-
-      this.divider = polygons[0].clone();
-      
-      for ( i = 0, polygon_count = polygons.length; i < polygon_count; i++ ) {
-        this.divider.splitPolygon( polygons[i], this.polygons, this.polygons, front, back );
-      }   
-      
-      if ( front.length > 0 ) {
-        this.front = new  Node( front );
-      }
-      
-      if ( back.length > 0 ) {
-        this.back = new  Node( back );
-      }
     }
-    
+
     isConvex ( polygons ) {
       var i, j;
       for ( i = 0; i < polygons.length; i++ ) {
@@ -47,7 +27,7 @@ class Node {
       return true;
     }
     
-    build ( polygons ) {
+    async build ( polygons ) {
       var i, polygon_count,
         front = [],
         back = [];
@@ -62,12 +42,12 @@ class Node {
       
       if ( front.length > 0 ) {
         if ( !this.front ) this.front = new  Node();
-        this.front.build( front );
+        await this.front.build( front );
       }
       
       if ( back.length > 0 ) {
         if ( !this.back ) this.back = new  Node();
-        this.back.build( back );
+        await this.back.build( back );
       }
     }
     
@@ -396,9 +376,19 @@ class Polygon  {
 class ThreeBSP { 
 
 
- 
+  constructor(geometry) {
+    if (geometry) {
+      throw 'Initialize ThreeBSP via build() instead of ctor.';
+    }
+  }
 
-  constructor( geometry) { 
+  static async fromGeometry(geometry) {
+    const bsp = new ThreeBSP();
+    await bsp.build(geometry);
+    return bsp;
+  }
+
+  async build(geometry) {
 
      // Convert Geometry to ThreeBSP
      var i, _length_i,
@@ -506,25 +496,25 @@ class ThreeBSP {
      polygons.push( polygon );
    };
  
-   this.tree = new  Node( polygons );
-
+   this.tree = new Node();
+   await this.tree.build(polygons);
   }
   
   
-    fromBufferGeometry ( geometry ){
+    async fromBufferGeometry ( geometry ){
 
         if( geometry.index === null ){
 
-            this.fromNonIndexedBufferGeometry( geometry );
+            await this.fromNonIndexedBufferGeometry( geometry );
 
         }else{
 
-            this.fromIndexedBufferGeometry( geometry );
+            await this.fromIndexedBufferGeometry( geometry );
 
         }
     }
 	/*  experimental */
-   fromIndexedBufferGeometry  ( geometry ){
+   async fromIndexedBufferGeometry  ( geometry ){
 	   
         var i, il, index, vertex, polygon,
             indices = geometry.index.array,
@@ -553,10 +543,11 @@ class ThreeBSP {
             polygon.calculateProperties();
             polygons.push( polygon );
         }
-        this.tree = new Node( polygons );
+        this.tree = new Node();
+        await this.tree.build(polygons);
     }
 	/*  experimental */
-    fromNonIndexedBufferGeometry( geometry ){
+    async fromNonIndexedBufferGeometry( geometry ){
 		
         var i, il, index, vertex, normal, uv, polygon,
             positions = geometry.attributes.position.array,
@@ -594,12 +585,13 @@ class ThreeBSP {
 		
  
 		
-        this.tree = new  Node( polygons );
+        this.tree = new  Node();
+        await this.tree.build(polygons);
     }
   
 
 
-  subtract( other_tree ) {
+  async subtract( other_tree ) {
       var a = this.tree.clone(),
         b = other_tree.tree.clone();
       
@@ -609,14 +601,14 @@ class ThreeBSP {
       b.invert();
       b.clipTo( a );
       b.invert();
-      a.build( b.allPolygons() );
+      await a.build( b.allPolygons() );
       a.invert();
-      a = new ThreeBSP( a );
-      a.matrix = this.matrix;
-      return a;
+      const a2 = await ThreeBSP.fromGeometry(a);
+      a2.matrix = this.matrix;
+      return a2;
     }
     
-     union( other_tree ) {
+     async union( other_tree ) {
       var a = this.tree.clone(),
         b = other_tree.tree.clone();
       
@@ -625,13 +617,13 @@ class ThreeBSP {
       b.invert();
       b.clipTo( a );
       b.invert();
-      a.build( b.allPolygons() );
-      a = new ThreeBSP( a );
-      a.matrix = this.matrix;
-      return a;
+      await a.build( b.allPolygons() );
+      const a2 = await ThreeBSP.fromGeometry(a);
+      a2.matrix = this.matrix;
+      return a2;
     } 
     
-    intersect( other_tree ) {
+    async intersect( other_tree ) {
       var a = this.tree.clone(),
         b = other_tree.tree.clone();
       
@@ -640,11 +632,11 @@ class ThreeBSP {
       b.invert();
       a.clipTo( b );
       b.clipTo( a );
-      a.build( b.allPolygons() );
+      await a.build( b.allPolygons() );
       a.invert();
-      a = new ThreeBSP( a );
-      a.matrix = this.matrix;
-      return a;
+      const a2 = await ThreeBSP.fromGeometry(a);
+      a2.matrix = this.matrix;
+      return a2;
     }
 	/*  experimental */
    toBufferGeometry() {
