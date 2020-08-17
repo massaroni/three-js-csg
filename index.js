@@ -456,7 +456,7 @@ class ThreeBSP {
      faceVertexUvs = geometry.faceVertexUvs[0][i];
      polygon = new Polygon();
      
-     if ( face instanceof  Face3 ) {
+     if ( isFace3(face) ) {
        vertex = geometry.vertices[ face.a ];
                                uvs = faceVertexUvs ? new  Vector2( faceVertexUvs[0].x, faceVertexUvs[0].y ) : null;
                                vertex = new  Vertex( vertex.x, vertex.y, vertex.z, face.vertexNormals[0], uvs );
@@ -474,7 +474,7 @@ class ThreeBSP {
                                vertex = new  Vertex( vertex.x, vertex.y, vertex.z, face.vertexNormals[2], uvs );
        vertex.applyMatrix4(this.matrix);
        polygon.vertices.push( vertex );
-     } else if ( typeof Face4 ) {
+     } else if ( isFace4Like(face) ) {
        vertex = geometry.vertices[ face.a ];
                                uvs = faceVertexUvs ? new Vector2( faceVertexUvs[0].x, faceVertexUvs[0].y ) : null;
                                vertex = new  Vertex( vertex.x, vertex.y, vertex.z, face.vertexNormals[0], uvs );
@@ -801,3 +801,15 @@ class ThreeBSP {
   } 
 
 export  { ThreeBSP }  
+
+function isFace3(face) {
+  return face && (face instanceof Face3 || (isFace3Like(face) && !isFace4Like(face)));
+}
+
+function isFace3Like(face) {
+  return face && face.vertexNormals && face.vertexNormals.length === 3 && Number.isFinite(face.a) && Number.isFinite(face.b) && Number.isFinite(face.c);
+}
+
+function isFace4Like(face) {
+  return face && face.vertexNormals && face.vertexNormals.length === 4 && Number.isFinite(face.d) && isFace3Like(face);
+}
